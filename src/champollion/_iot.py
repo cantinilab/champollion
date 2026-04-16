@@ -50,9 +50,9 @@ class LassoIOT:
             ay = y @ A.T
             x_i = LazyTensor(x[:, None, :])
             ay_i = LazyTensor(ay[:, None, :])
-            trace = (x_i * ay_i).sum(dim=2).sum(dim=0) / self.n_p
+            trace = -(x_i * ay_i).sum(dim=2).sum(dim=0) / self.n_p
         else:
-            trace = (torch.einsum("ij,jk,ik->i", x, A, y) / self.n_p).sum()
+            trace = -(torch.einsum("ij,jk,ik->i", x, A, y) / self.n_p).sum()
         return trace
 
     def get_learnt_cost(self, x, y):

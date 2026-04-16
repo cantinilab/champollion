@@ -1,8 +1,8 @@
 # Interpreting the Learned Matrix
 
-Champollion learns a sparse bilinear interaction matrix `A` between the two modality representation spaces.
+Champollion learns a sparse bilinear interaction matrix $\mathbf{A}$ between the two modality representation spaces.
 
-This matrix is one of the main interpretability outputs of the method. It tells which dimensions of one modality representation are encouraged or discouraged to match dimensions of the other modality when constructing the cross-modality cost.
+The matrix $\mathbf{A}$ captures dependencies between features across modalities. A positive entry indicates that the corresponding features tend to be expressed in the same cells, while lower or negative values indicate weaker or opposing associations. These associations can arise for many reasons, such as shared regulation, co-expression driven by a common cause, or direct regulatory interactions. The model does not distinguish between these mechanisms, but instead provides a map of cross-modal associations that can be further investigated.
 
 ```python
 A = model.A_dataframe()
@@ -10,7 +10,7 @@ A = model.A_dataframe()
 
 The returned object is a `pandas.DataFrame` with row and column names corresponding to the feature names recorded during `fit`.
 
-Because Champollion can use any single-cell representation as input, the interpretation of `A` depends on the representation. If raw or biologically named features are used, `A` can be read directly as feature associations across modalities, which can help discover markers or prioritize feature pairs for downstream enrichment analysis. If low-dimensional representations are used, `A` links dimensions or factors; this can still be biologically meaningful when those factors are interpretable, for example with models such as [DRVI](https://drvi.readthedocs.io/latest/).
+Because Champollion can use any single-cell representation as input, the interpretation of $\mathbf{A}$ depends on the representation. If raw or biologically named features are used, $\mathbf{A}$ can be read directly as feature associations across modalities, which can help discover markers or prioritize feature pairs for downstream enrichment analysis. If low-dimensional representations are used, $\mathbf{A}$ links dimensions or factors; this can still be biologically meaningful when those factors are interpretable, for example with models such as [DRVI](https://drvi.readthedocs.io/latest/).
 
 Use `top_interactions` to inspect the strongest interactions for a feature:
 

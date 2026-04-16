@@ -9,8 +9,8 @@ def learnt_cost(x, y, A, use_keops):
         ay = y @ A.T
         x_i = LazyTensor(x[:, None, :])
         ay_j = LazyTensor(ay[None, :, :])
-        return (x_i * ay_j).sum(dim=2)
-    return x @ A @ y.T
+        return -(x_i * ay_j).sum(dim=2)
+    return -(x @ A @ y.T)
 
 
 def full_cost(x, y, A, prior_cost=None, lambda_prior=1.0, use_keops=False):

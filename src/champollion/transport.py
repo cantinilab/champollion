@@ -135,7 +135,7 @@ class TransportResult:
         """
         self._check_materialization_limit(max_entries=max_entries, what="cost")
         if self._materialized_cost is None:
-            cost = self._x @ self._model.A_ @ self._y.T
+            prior_cost = None
             if self._prior_x is not None and self._prior_y is not None:
                 prior_cost = compute_prior_cost(
                     self._prior_x,
@@ -143,8 +143,14 @@ class TransportResult:
                     device=self._x.device,
                     use_keops=False,
                 )
-                cost = cost + self._model.lambda_prior * prior_cost
-            self._materialized_cost = cost
+            self._materialized_cost = full_cost(
+                x=self._x,
+                y=self._y,
+                A=self._model.A_,
+                prior_cost=prior_cost,
+                lambda_prior=self._model.lambda_prior,
+                use_keops=False,
+            )
         return self._materialized_cost
 
     def materialize_plan(self, max_entries=DEFAULT_MAX_MATERIALIZE_ENTRIES):
@@ -164,9 +170,15 @@ class TransportResult:
         self._check_materialization_limit(max_entries=max_entries, what="plan")
         if self._materialized_plan is None:
             cost = self.materialize_cost(max_entries=max_entries)
-            self._materialized_plan = (
-                (self.f[:, None] + self.g[None, :] - cost) / self._model.epsilon
-            ).exp() / (self._x.shape[0] * self._y.shape[0])
+            self._materialized_plan = transport_plan(
+                cost=cost,
+                f=self.f,
+                g=self.g,
+                epsilon=self._model.epsilon,
+                n_x=self._x.shape[0],
+                n_y=self._y.shape[0],
+                use_keops=False,
+            )
         return self._materialized_plan
 
     def transfer_obs(
