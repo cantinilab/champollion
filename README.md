@@ -22,7 +22,7 @@ pip install "champollion[wandb]"
 
 ## Documentation
 
-Documentation and tutorials are available at [champollion.readthedocs.io](https://champollion.readthedocs.io/).
+Documentation and tutorials are available at [champollion-omics.readthedocs.io](https://champollion-omics.readthedocs.io/en/latest/).
 
 The PBMC tutorial included in `docs/source/tutorials/pbmc_tutorial.ipynb` demonstrates fitting Champollion on bridge cells, transporting unpaired cells, transferring annotations, and building a joint visualization.
 
@@ -70,9 +70,10 @@ The learned matrix can be inspected directly:
 
 ```python
 A = model.A_dataframe()
-top_links = model.top_interactions("GATA1", modality="rna", k=10)
+top_links = model.top_interactions("CD18", modality="protein", k=10)
 ```
 
 ## Citation
 
 The preprint is in preparation. Citation information will be added before the official release.
+if you're looking for the repository to reproduce the results in the article, please see the [champollion_reproducibility](https://github.com/cantinilab/champollion_reproducibility) repository!
