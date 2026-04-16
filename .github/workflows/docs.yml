@@ -31,6 +31,9 @@ jobs:
           path: .venv
           key: docs-${{ runner.os }}-py312-${{ hashFiles('poetry.lock') }}
 
+      - name: Install Pandoc
+        run: sudo apt-get update && sudo apt-get install -y pandoc
+
       - name: Install dependencies
         run: poetry install --extras docs
 

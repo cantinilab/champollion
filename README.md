@@ -20,6 +20,13 @@ Optional Weights & Biases logging can be installed with:
 pip install "champollion[wandb]"
 ```
 
+## Documentation
+
+Documentation and tutorials are available at [champollion.readthedocs.io](https://champollion.readthedocs.io/).
+
+The PBMC tutorial included in `docs/source/tutorials/pbmc_tutorial.ipynb` demonstrates fitting Champollion on bridge cells, transporting unpaired cells, transferring annotations, and building a joint visualization.
+
+
 ## Getting Started
 
 Champollion is fitted on a paired bridge stored in a `MuData` object. It can then be applied to modality-specific `AnnData` objects containing unpaired cells.
@@ -65,10 +72,6 @@ The learned matrix can be inspected directly:
 A = model.A_dataframe()
 top_links = model.top_interactions("GATA1", modality="rna", k=10)
 ```
-
-## Documentation
-
-Documentation and tutorials are built with Sphinx and ReadTheDocs. The PBMC tutorial included in `docs/source/tutorials/pbmc_tutorial.ipynb` demonstrates fitting Champollion on bridge cells, transporting unpaired cells, transferring annotations, and building a joint visualization.
 
 ## Citation
 
