@@ -1,0 +1,18 @@
+.DS_Store
+.idea/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+dist/
+build/
+*.egg-info/
+
+docs/build/
+notebooks/
+
+# Internal regression tests kept locally during development.
+tests/test_regression_semipaired.py
+tests/test_synthetic_smoke.py

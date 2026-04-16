@@ -1,0 +1,55 @@
+[tool.poetry]
+name = "champollion-jsamaran-test"
+version = "0.1.1"
+description = "Semi-paired single-cell multimodal integration with Champollion"
+authors = ["jules-samaran <samaran.jules@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "champollion", from = "src" }]
+license = "GPL-3.0-or-later"
+
+[tool.poetry.dependencies]
+python = "^3.12.7"
+torch = ">=2.2,<2.7"
+anndata = "^0.10.9"
+mudata = "^0.3.1"
+muon = "^0.1.6"
+zarr = ">=2.18,<4"
+wandb = { version = "^0.17.3", optional = true }
+flatten-dict = "^0.4.2"
+pytest = "^8.3.2"
+scikit-misc = "^0.5.1"
+pykeops = "^2.2.3"
+notebook = "^7.4.7"
+ipykernel = "^7.0.0"
+gprofiler-official = "^1.0.0"
+sphinx = { version = "^8.2.0", optional = true }
+furo = { version = "^2025.7.19", optional = true }
+myst-parser = { version = "^4.0.0", optional = true }
+nbsphinx = { version = "^0.9.7", optional = true }
+sphinx-autodoc-typehints = { version = "^3.5.0", optional = true }
+ruff = { version = "^0.14.0", optional = true }
+
+[tool.poetry.extras]
+wandb = ["wandb"]
+docs = ["sphinx", "furo", "myst-parser", "nbsphinx", "sphinx-autodoc-typehints"]
+dev = ["ruff"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+ignore = [
+    "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/test_regression_semipaired.py" = ["E402"]
+"tests/test_synthetic_smoke.py" = ["E402"]
+"tests/test_champollion_api.py" = ["E402"]
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
