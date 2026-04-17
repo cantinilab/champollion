@@ -24,7 +24,7 @@ pip install "champollion[wandb]"
 
 Documentation and tutorials are available at [champollion-omics.readthedocs.io](https://champollion-omics.readthedocs.io/en/latest/).
 
-The PBMC tutorial included in `docs/source/tutorials/pbmc_tutorial.ipynb` demonstrates fitting Champollion on bridge cells, transporting unpaired cells, transferring annotations, and building a joint visualization.
+The PBMC tutorial included in `tutorials/pbmc_tutorial.ipynb` demonstrates fitting Champollion on bridge cells, transporting unpaired cells, transferring annotations, and building a joint visualization.
 
 
 ## Getting Started
