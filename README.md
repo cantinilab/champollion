@@ -1,5 +1,11 @@
 # Champollion
 
+[![Tests](https://github.com/cantinilab/champollion/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/cantinilab/champollion/actions/workflows/tests.yml)
+[![Lint](https://github.com/cantinilab/champollion/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/cantinilab/champollion/actions/workflows/lint.yml)
+[![Docs](https://github.com/cantinilab/champollion/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/cantinilab/champollion/actions/workflows/docs.yml)
+[![Build](https://github.com/cantinilab/champollion/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/cantinilab/champollion/actions/workflows/build.yml)
+[![codecov](https://codecov.io/gh/cantinilab/champollion/branch/main/graph/badge.svg)](https://codecov.io/gh/cantinilab/champollion)
+
 Champollion learns an interpretable cross-modality cost from paired bridge cells and uses it to integrate unpaired single-cell profiles across modalities. It is designed for scverse workflows with `AnnData` and `MuData`, and exposes utilities for annotation transfer, barycentric projection, and interpretation of the learned interaction matrix.
 
 ![Champollion model overview](docs/source/_static/champollion_model.png)
