@@ -11,10 +11,10 @@ The bridge is passed as a `MuData` object. The two selected modalities must cont
 ```python
 model.fit(
     mdata_bridge,
-    x_mod="rna",
-    y_mod="atac",
-    x_rep="X_pca",
-    y_rep="X_lsi",
+    modality_1="rna",
+    modality_2="atac",
+    x_1_rep="X_pca",
+    x_2_rep="X_lsi",
 )
 ```
 
@@ -58,12 +58,12 @@ In practice, these priors often come from sparse known connections between featu
 ```python
 model.fit(
     mdata_bridge,
-    x_mod="rna",
-    y_mod="atac",
-    x_rep="X_pca",
-    y_rep="X_lsi",
-    prior_x_rep="X_prior",
-    prior_y_rep="X_prior",
+    modality_1="rna",
+    modality_2="atac",
+    x_1_rep="X_pca",
+    x_2_rep="X_lsi",
+    y_prior_1_rep="X_prior",
+    y_prior_2_rep="X_prior",
 )
 ```
 
@@ -72,7 +72,7 @@ If priors are used during `fit`, matching prior representations are expected dur
 ```python
 result = model.transport(
     {"rna": adata_rna, "atac": adata_atac},
-    prior_reps={"rna": "X_prior", "atac": "X_prior"},
+    y_prior_reps={"rna": "X_prior", "atac": "X_prior"},
 )
 ```
 

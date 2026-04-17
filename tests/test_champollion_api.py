@@ -87,13 +87,13 @@ def _fit_model(seed=0, use_keops=False, use_prior=True):
     )
     kwargs = {}
     if use_prior:
-        kwargs = {"prior_x_rep": "prior", "prior_y_rep": "prior"}
+        kwargs = {"y_prior_1_rep": "prior", "y_prior_2_rep": "prior"}
     model.fit(
         bridge,
-        x_mod="rna",
-        y_mod="adt",
-        x_rep="latent",
-        y_rep="latent",
+        modality_1="rna",
+        modality_2="adt",
+        x_1_rep="latent",
+        x_2_rep="latent",
         feature_names=FEATURE_NAMES,
         **kwargs,
     )
@@ -122,8 +122,8 @@ def test_public_dense_fit_transport_and_transfer_workflow():
     adatas = _make_unpaired(seed=11)
     result = model.transport(
         adatas,
-        reps={"rna": "latent", "adt": "latent"},
-        prior_reps={"rna": "prior", "adt": "prior"},
+        x_reps={"rna": "latent", "adt": "latent"},
+        y_prior_reps={"rna": "prior", "adt": "prior"},
         feature_names=FEATURE_NAMES,
         max_iter_sink=3,
         log_every=1,
@@ -183,8 +183,8 @@ def test_schema_validation_and_prior_error_paths():
     with pytest.raises(ValueError, match="was fitted with 3 features"):
         model.transport(
             {"rna": adatas["adt"], "adt": adatas["rna"]},
-            reps={"rna": "latent", "adt": "latent"},
-            prior_reps={"rna": "prior", "adt": "prior"},
+            x_reps={"rna": "latent", "adt": "latent"},
+            y_prior_reps={"rna": "prior", "adt": "prior"},
             max_iter_sink=1,
             log_every=1,
         )
@@ -194,8 +194,8 @@ def test_schema_validation_and_prior_error_paths():
     with pytest.raises(ValueError, match="Feature names"):
         model.transport(
             {"rna": bad_rna, "adt": adatas["adt"]},
-            reps={"rna": "latent", "adt": "latent"},
-            prior_reps={"rna": "prior", "adt": "prior"},
+            x_reps={"rna": "latent", "adt": "latent"},
+            y_prior_reps={"rna": "prior", "adt": "prior"},
             feature_names={
                 "rna": ["rna_factor_2", "rna_factor_1", "rna_factor_0"],
                 "adt": ["adt_factor_0", "adt_factor_1"],
@@ -207,8 +207,8 @@ def test_schema_validation_and_prior_error_paths():
     with pytest.raises(ValueError, match="prior representations cannot be None"):
         model.transport(
             adatas,
-            reps={"rna": "latent", "adt": "latent"},
-            prior_reps={"rna": None, "adt": None},
+            x_reps={"rna": "latent", "adt": "latent"},
+            y_prior_reps={"rna": None, "adt": None},
             feature_names=FEATURE_NAMES,
             max_iter_sink=1,
             log_every=1,
@@ -218,8 +218,8 @@ def test_schema_validation_and_prior_error_paths():
     with pytest.raises(ValueError, match="fitted without priors"):
         no_prior_model.transport(
             adatas,
-            reps={"rna": "latent", "adt": "latent"},
-            prior_reps={"rna": "prior", "adt": "prior"},
+            x_reps={"rna": "latent", "adt": "latent"},
+            y_prior_reps={"rna": "prior", "adt": "prior"},
             feature_names=FEATURE_NAMES,
             max_iter_sink=1,
             log_every=1,
@@ -251,9 +251,9 @@ def test_X_and_layer_representations_use_var_names_and_can_be_reused():
         transport_log_every=1,
         sinkhorn_tol=0.0,
         verbose=False,
-    ).fit(bridge, x_mod="rna", y_mod="adt")
+    ).fit(bridge, modality_1="rna", modality_2="adt")
 
-    assert x_model.reps_ == {"rna": "X", "adt": "X"}
+    assert x_model.x_reps_ == {"rna": "X", "adt": "X"}
     assert list(x_model.feature_names_["rna"]) == ["gene_a", "gene_b", "gene_c"]
     assert list(x_model.feature_names_["adt"]) == ["protein_a", "protein_b"]
     assert list(x_model.A_dataframe().index) == ["gene_a", "gene_b", "gene_c"]
@@ -287,13 +287,13 @@ def test_X_and_layer_representations_use_var_names_and_can_be_reused():
         verbose=False,
     ).fit(
         bridge,
-        x_mod="rna",
-        y_mod="adt",
-        x_rep="layers/counts",
-        y_rep="counts",
+        modality_1="rna",
+        modality_2="adt",
+        x_1_rep="layers/counts",
+        x_2_rep="counts",
     )
 
-    assert layer_model.reps_ == {"rna": "layers/counts", "adt": "counts"}
+    assert layer_model.x_reps_ == {"rna": "layers/counts", "adt": "counts"}
     assert list(layer_model.feature_names_["rna"]) == ["gene_a", "gene_b", "gene_c"]
     assert list(layer_model.feature_names_["adt"]) == ["protein_a", "protein_b"]
 
@@ -307,7 +307,7 @@ def test_X_and_layer_representations_use_var_names_and_can_be_reused():
     )
     explicit_reps = layer_model.transport(
         {"rna": rna_test, "adt": adt_test},
-        reps={"rna": "layers/counts", "adt": "counts"},
+        x_reps={"rna": "layers/counts", "adt": "counts"},
         max_iter_sink=2,
         log_every=1,
     )
@@ -376,14 +376,14 @@ def test_save_load_and_A_interpretation_utilities(tmp_path):
     adatas = _make_unpaired(seed=31)
     before = model.transport(
         adatas,
-        reps={"rna": "latent", "adt": "latent"},
+        x_reps={"rna": "latent", "adt": "latent"},
         feature_names=FEATURE_NAMES,
         max_iter_sink=3,
         log_every=1,
     )
     after = loaded.transport(
         adatas,
-        reps={"rna": "latent", "adt": "latent"},
+        x_reps={"rna": "latent", "adt": "latent"},
         feature_names=FEATURE_NAMES,
         max_iter_sink=3,
         log_every=1,
@@ -426,8 +426,8 @@ def test_keops_symbolic_transport_and_materialization_guards():
     adatas = _make_unpaired(seed=41, n_rna=2, n_adt=3)
     result = model.transport(
         adatas,
-        reps={"rna": "latent", "adt": "latent"},
-        prior_reps={"rna": "prior", "adt": "prior"},
+        x_reps={"rna": "latent", "adt": "latent"},
+        y_prior_reps={"rna": "prior", "adt": "prior"},
         feature_names=FEATURE_NAMES,
         max_iter_sink=2,
         log_every=1,

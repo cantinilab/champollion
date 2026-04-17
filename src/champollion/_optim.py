@@ -5,8 +5,8 @@ from tqdm import tqdm
 class AdamOptimizer:
     def __init__(
         self,
-        x,
-        y,
+        x_1,
+        x_2,
         prior_cost=None,
         max_iter=2000,
         log_n_steps=10,
@@ -17,10 +17,10 @@ class AdamOptimizer:
         verbose=False,
         **optim_kwargs,
     ):
-        self.x = x
-        self.y = y
+        self.x_1 = x_1
+        self.x_2 = x_2
         self.prior_cost = prior_cost
-        self.device = x.device
+        self.device = x_1.device
 
         self.max_iter = max_iter
         self.sink_tol = sink_tol
@@ -59,14 +59,14 @@ class AdamOptimizer:
         if self.verbose:
             print(f"{key}: {value}")
 
-    def log_plan_marginal_mass(self, marginal_x):
-        weights_x = torch.ones_like(marginal_x) / len(marginal_x)
+    def log_plan_marginal_mass(self, marginal_1):
+        weights_1 = torch.ones_like(marginal_1) / len(marginal_1)
         with torch.no_grad():
-            err_x = torch.linalg.norm(weights_x - marginal_x, ord=1).item()
-        self.log(name="err_x", value=err_x)
-        plan_mass = marginal_x.sum().item()
+            err_1 = torch.linalg.norm(weights_1 - marginal_1, ord=1).item()
+        self.log(name="err_1", value=err_1)
+        plan_mass = marginal_1.sum().item()
         self.log(name="plan_mass", value=plan_mass)
-        return plan_mass, err_x
+        return plan_mass, err_1
 
     def fit(self, iot_model):
         optimizer = torch.optim.Adam(iot_model.get_optim_params(), **self.optim_kwargs)
@@ -76,7 +76,10 @@ class AdamOptimizer:
             reg_loss = iot_model.regularization_loss()
             log_flag = i % self.log_n_steps == 0
             loss_dict = iot_model.iot_loss(
-                x=self.x, y=self.y, prior_cost=self.prior_cost, return_marginal=log_flag
+                x_1=self.x_1,
+                x_2=self.x_2,
+                prior_cost=self.prior_cost,
+                return_marginal=log_flag,
             )
             loss = loss_dict["obj_loss"] + reg_loss
             loss.backward()
@@ -86,10 +89,10 @@ class AdamOptimizer:
                 self.log(name="obj_loss", value=loss_dict["obj_loss"].item())
                 self.log(name="reg_loss", value=reg_loss.item())
                 self.log(name="trace_term", value=loss_dict["trace_term"])
-                marginal_x = loss_dict["marginal_x"]
-                _, err_x = self.log_plan_marginal_mass(marginal_x=marginal_x)
+                marginal_1 = loss_dict["marginal_1"]
+                _, err_1 = self.log_plan_marginal_mass(marginal_1=marginal_1)
 
-                conv_flag = err_x < self.sink_tol
+                conv_flag = err_1 < self.sink_tol
                 if self.monitor_gradient_norm:
                     gradient_norm = torch.linalg.norm(
                         torch.cat(
@@ -114,9 +117,13 @@ class AdamOptimizer:
         if not conv_flag and self.verbose:
             print("Training reached max_iter")
 
-        cost = iot_model.get_full_cost(x=self.x, y=self.y, prior_cost=self.prior_cost)
+        cost = iot_model.get_full_cost(
+            x_1=self.x_1,
+            x_2=self.x_2,
+            prior_cost=self.prior_cost,
+        )
         plan = iot_model.get_plan(cost=cost)
-        plan_mass, _ = self.log_plan_marginal_mass(marginal_x=plan.sum(dim=1))
+        plan_mass, _ = self.log_plan_marginal_mass(marginal_1=plan.sum(dim=1))
         A_norm = (iot_model.get_A().norm(p=1)).item()
         self.summary_update(name="A_final_norm", value=A_norm)
 

@@ -23,35 +23,35 @@ class TransportResult:
     def __init__(
         self,
         model,
-        x,
-        y,
+        x_1,
+        x_2,
         f,
         g,
         prior_cost=None,
         cost=None,
         plan=None,
-        x_obs_names=None,
-        y_obs_names=None,
-        x_adata=None,
-        y_adata=None,
-        prior_x=None,
-        prior_y=None,
+        modality_1_obs_names=None,
+        modality_2_obs_names=None,
+        modality_1_adata=None,
+        modality_2_adata=None,
+        y_prior_1=None,
+        y_prior_2=None,
         plan_diagnostics=None,
     ):
         self._model = model
-        self._x = x
-        self._y = y
+        self._x_1 = x_1
+        self._x_2 = x_2
         self._prior_cost = prior_cost
         self._cost = cost
         self._plan = plan
         self.f = f
         self.g = g
-        self.x_obs_names = x_obs_names
-        self.y_obs_names = y_obs_names
-        self.x_adata = x_adata
-        self.y_adata = y_adata
-        self._prior_x = prior_x
-        self._prior_y = prior_y
+        self.modality_1_obs_names = modality_1_obs_names
+        self.modality_2_obs_names = modality_2_obs_names
+        self.modality_1_adata = modality_1_adata
+        self.modality_2_adata = modality_2_adata
+        self._y_prior_1 = y_prior_1
+        self._y_prior_2 = y_prior_2
         self._materialized_cost = None
         self._materialized_plan = None
         self.plan_diagnostics = plan_diagnostics
@@ -81,8 +81,8 @@ class TransportResult:
         """Pairwise transport cost, computed lazily when needed."""
         if self._cost is None:
             self._cost = full_cost(
-                x=self._x,
-                y=self._y,
+                x_1=self._x_1,
+                x_2=self._x_2,
                 A=self._model.A_,
                 prior_cost=self._prior_cost,
                 lambda_prior=self._model.lambda_prior,
@@ -99,8 +99,8 @@ class TransportResult:
                 f=self.f,
                 g=self.g,
                 epsilon=self._model.epsilon,
-                n_x=self._x.shape[0],
-                n_y=self._y.shape[0],
+                n_1=self._x_1.shape[0],
+                n_2=self._x_2.shape[0],
                 use_keops=self._model.use_keops,
             )
         return self._plan
@@ -118,7 +118,7 @@ class TransportResult:
     def materialize_cost(self, max_entries=DEFAULT_MAX_MATERIALIZE_ENTRIES):
         """Return a dense tensor for the pairwise cost.
 
-        This explicitly allocates an ``n_x`` by ``n_y`` tensor, even when the
+        This explicitly allocates an ``n_1`` by ``n_2`` tensor, even when the
         result was computed with KeOps. Large materializations are blocked by
         default.
 
@@ -136,16 +136,16 @@ class TransportResult:
         self._check_materialization_limit(max_entries=max_entries, what="cost")
         if self._materialized_cost is None:
             prior_cost = None
-            if self._prior_x is not None and self._prior_y is not None:
+            if self._y_prior_1 is not None and self._y_prior_2 is not None:
                 prior_cost = compute_prior_cost(
-                    self._prior_x,
-                    self._prior_y,
-                    device=self._x.device,
+                    self._y_prior_1,
+                    self._y_prior_2,
+                    device=self._x_1.device,
                     use_keops=False,
                 )
             self._materialized_cost = full_cost(
-                x=self._x,
-                y=self._y,
+                x_1=self._x_1,
+                x_2=self._x_2,
                 A=self._model.A_,
                 prior_cost=prior_cost,
                 lambda_prior=self._model.lambda_prior,
@@ -175,8 +175,8 @@ class TransportResult:
                 f=self.f,
                 g=self.g,
                 epsilon=self._model.epsilon,
-                n_x=self._x.shape[0],
-                n_y=self._y.shape[0],
+                n_1=self._x_1.shape[0],
+                n_2=self._x_2.shape[0],
                 use_keops=False,
             )
         return self._materialized_plan
@@ -293,7 +293,7 @@ class TransportResult:
         """
         source = self._resolve_source(source)
         values = torch.as_tensor(
-            np.asarray(values).copy(), dtype=torch.float32, device=self._x.device
+            np.asarray(values).copy(), dtype=torch.float32, device=self._x_1.device
         )
         if values.ndim == 1:
             values = values[:, None]
@@ -312,9 +312,9 @@ class TransportResult:
         """
         plan = self._dense_plan()
         source = self._resolve_source(source)
-        if source == self._model.y_mod_:
+        if source == self._model.modality_2_:
             weights = plan
-        elif source == self._model.x_mod_:
+        elif source == self._model.modality_1_:
             weights = plan.T
         else:
             raise ValueError(f"source must be one of {self._model.modalities_}.")
@@ -376,16 +376,16 @@ class TransportResult:
         return {"prediction": prediction, "probabilities": probabilities}
 
     def _get_source_target_adatas(self, source):
-        if self.x_adata is None or self.y_adata is None:
+        if self.modality_1_adata is None or self.modality_2_adata is None:
             raise RuntimeError(
                 "This TransportResult does not hold AnnData references, so "
                 "AnnData-based transfer methods are unavailable."
             )
         source = self._resolve_source(source)
-        if source == self._model.x_mod_:
-            return self.x_adata, self.y_adata
-        if source == self._model.y_mod_:
-            return self.y_adata, self.x_adata
+        if source == self._model.modality_1_:
+            return self.modality_1_adata, self.modality_2_adata
+        if source == self._model.modality_2_:
+            return self.modality_2_adata, self.modality_1_adata
         raise ValueError(f"source must be one of {self._model.modalities_}.")
 
     def _resolve_source(self, source):
@@ -405,11 +405,11 @@ class TransportResult:
         return plan
 
     def _check_materialization_limit(self, max_entries, what):
-        n_entries = self._x.shape[0] * self._y.shape[0]
+        n_entries = self._x_1.shape[0] * self._x_2.shape[0]
         if max_entries is not None and n_entries > max_entries:
             raise RuntimeError(
                 f"Blocked materialize_{what}() because it would allocate a dense "
-                f"{self._x.shape[0]} x {self._y.shape[0]} tensor "
+                f"{self._x_1.shape[0]} x {self._x_2.shape[0]} tensor "
                 f"({n_entries} entries), which is larger than max_entries="
                 f"{max_entries}. Increase max_entries if you still want to "
                 "materialize this result."
@@ -417,11 +417,11 @@ class TransportResult:
 
     def _apply_symbolic(self, values, source):
         plan = self.plan
-        if source == self._model.y_mod_:
+        if source == self._model.modality_2_:
             values_j = LazyTensor(values[None, :, :])
             numerator = (plan * values_j).sum(dim=1)
             denominator = plan.sum(dim=1)
-        elif source == self._model.x_mod_:
+        elif source == self._model.modality_1_:
             values_i = LazyTensor(values[:, None, :])
             numerator = (plan * values_i).sum(dim=0)
             denominator = plan.sum(dim=0)
@@ -433,10 +433,10 @@ class TransportResult:
 
     def _symbolic_topk(self, source, k):
         plan = self.plan
-        if source == self._model.y_mod_:
+        if source == self._model.modality_2_:
             dim = 1
             denominator = plan.sum(dim=1)
-        elif source == self._model.x_mod_:
+        elif source == self._model.modality_1_:
             dim = 0
             denominator = plan.sum(dim=0)
         else:

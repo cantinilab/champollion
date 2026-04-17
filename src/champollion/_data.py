@@ -80,16 +80,16 @@ def as_float_tensor(array, device):
     return torch.tensor(array, dtype=torch.float32, device=device)
 
 
-def align_fully_paired_modalities(x_adata, y_adata):
+def align_fully_paired_modalities(adata_1, adata_2):
     """Validate and align the paired bridge cells by observation name."""
-    if x_adata.n_obs != y_adata.n_obs:
+    if adata_1.n_obs != adata_2.n_obs:
         raise ValueError(
             "Bridge data must have the same number of observations in both modalities."
         )
-    if list(x_adata.obs_names) == list(y_adata.obs_names):
-        return x_adata, y_adata
-    if set(x_adata.obs_names) != set(y_adata.obs_names):
+    if list(adata_1.obs_names) == list(adata_2.obs_names):
+        return adata_1, adata_2
+    if set(adata_1.obs_names) != set(adata_2.obs_names):
         raise ValueError(
             "Bridge data must contain the same observation names in both modalities."
         )
-    return x_adata, y_adata[x_adata.obs_names].copy()
+    return adata_1, adata_2[adata_1.obs_names].copy()

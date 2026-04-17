@@ -37,18 +37,18 @@ model = Champollion(
 
 model.fit(
     mdata_bridge,
-    x_mod="rna",
-    y_mod="atac",
-    x_rep="X_pca",
-    y_rep="X_lsi",
-    prior_x_rep="X_prior",
-    prior_y_rep="X_prior",
+    modality_1="rna",
+    modality_2="atac",
+    x_1_rep="X_pca",
+    x_2_rep="X_lsi",
+    y_prior_1_rep="X_prior",
+    y_prior_2_rep="X_prior",
 )
 
 result = model.transport(
     {"rna": adata_rna, "atac": adata_atac},
-    reps={"rna": "X_pca", "atac": "X_lsi"},
-    prior_reps={"rna": "X_prior", "atac": "X_prior"},
+    x_reps={"rna": "X_pca", "atac": "X_lsi"},
+    y_prior_reps={"rna": "X_prior", "atac": "X_prior"},
 )
 ```
 

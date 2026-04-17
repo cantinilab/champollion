@@ -33,7 +33,7 @@ def process_prior_data(prior_data):
     return prior_data
 
 
-def compute_prior_cost(prior_x, prior_y, device, use_keops=False):
+def compute_prior_cost(y_prior_1, y_prior_2, device, use_keops=False):
     """Compute the normalized prior cost between two modalities.
 
     This function is primarily used internally by Champollion. It preprocesses
@@ -43,7 +43,7 @@ def compute_prior_cost(prior_x, prior_y, device, use_keops=False):
 
     Parameters
     ----------
-    prior_x, prior_y
+    y_prior_1, y_prior_2
         Prior representations with the same number of columns.
     device
         Torch device on which to place the result.
@@ -55,19 +55,19 @@ def compute_prior_cost(prior_x, prior_y, device, use_keops=False):
     torch.Tensor or pykeops.torch.LazyTensor
         Normalized pairwise prior cost.
     """
-    prior_x = process_prior_data(prior_x)
-    prior_y = process_prior_data(prior_y)
+    y_prior_1 = process_prior_data(y_prior_1)
+    y_prior_2 = process_prior_data(y_prior_2)
     if use_keops:
         from pykeops.torch import LazyTensor
 
-        x = as_float_tensor(prior_x, device=device)
-        y = as_float_tensor(prior_y, device=device)
-        x_i = LazyTensor(x[:, None, :])
-        y_j = LazyTensor(y[None, :, :])
-        cost = 1 - (x_i | y_j)
-        cost_mean = cost.sum(dim=1).sum() / (prior_x.shape[0] * prior_y.shape[0])
+        y_1 = as_float_tensor(y_prior_1, device=device)
+        y_2 = as_float_tensor(y_prior_2, device=device)
+        y_1_i = LazyTensor(y_1[:, None, :])
+        y_2_j = LazyTensor(y_2[None, :, :])
+        cost = 1 - (y_1_i | y_2_j)
+        cost_mean = cost.sum(dim=1).sum() / (y_prior_1.shape[0] * y_prior_2.shape[0])
     else:
-        cost = as_float_tensor(1 - np.dot(prior_x, prior_y.T), device=device)
+        cost = as_float_tensor(1 - np.dot(y_prior_1, y_prior_2.T), device=device)
         cost_mean = cost.mean()
     if np.isclose(float(cost_mean.detach().cpu()), 0.0, atol=1e-6):
         warnings.warn(
