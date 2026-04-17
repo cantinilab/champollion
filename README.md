@@ -32,10 +32,9 @@ Documentation and tutorials are available at [champollion-omics.readthedocs.io](
 
 The PBMC tutorial included in `tutorials/pbmc_tutorial.ipynb` demonstrates fitting Champollion on bridge cells, transporting unpaired cells, transferring annotations, and building a joint visualization.
 
-
 ## Getting Started
 
-Champollion is fitted on a paired bridge stored in a `MuData` object. It can then be applied to modality-specific `AnnData` objects containing unpaired cells.
+For a concrete application, see the PBMC tutorial; the example below is only a compact overview of the API. Champollion is fitted on a paired bridge stored in a `MuData` object. It can then be applied to modality-specific `AnnData` objects containing unpaired cells.
 
 ```python
 from champollion import Champollion

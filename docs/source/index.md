@@ -60,7 +60,6 @@ installation
 quickstart
 user_guide/data
 user_guide/transport
-user_guide/priors
 user_guide/keops
 user_guide/interactions
 user_guide/persistence
