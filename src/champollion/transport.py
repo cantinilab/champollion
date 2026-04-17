@@ -16,8 +16,8 @@ class TransportResult:
     A result stores the Sinkhorn potentials and lazily exposes the pairwise
     cost and transport plan. In dense mode these are torch tensors. In KeOps
     mode they may be symbolic LazyTensor objects, so use the high-level methods
-    such as :meth:`transfer_obs`, :meth:`project`, :meth:`top_matches`, and
-    :meth:`assignment_confidence` when possible.
+    such as :meth:`transfer_obs`, :meth:`project`, and :meth:`top_matches` when
+    possible.
     """
 
     def __init__(
@@ -355,42 +355,6 @@ class TransportResult:
             columns[f"weight_{rank + 1}"] = values[:, rank].detach().cpu().numpy()
         return pd.DataFrame(columns, index=target_adata.obs_names)
 
-    def assignment_confidence(self, source):
-        """Summarize assignment sharpness for each target cell.
-
-        Parameters
-        ----------
-        source
-            Source modality name.
-
-        Returns
-        -------
-        pandas.DataFrame
-            Target-indexed table with maximum normalized weight, entropy, and
-            effective neighbor count.
-        """
-        _, target_adata = self._get_source_target_adatas(source)
-        source = self._resolve_source(source)
-        plan = self.plan
-        if isinstance(plan, torch.Tensor):
-            weights = self.normalized_plan(source=source)
-            max_weight = weights.max(dim=1).values
-            entropy = -(
-                weights
-                * torch.clamp(weights, min=torch.finfo(weights.dtype).tiny).log()
-            ).sum(dim=1)
-        else:
-            max_weight, entropy = self._symbolic_confidence(source=source)
-        effective_neighbors = entropy.exp()
-        return pd.DataFrame(
-            {
-                "max_weight": max_weight.detach().cpu().numpy(),
-                "entropy": entropy.detach().cpu().numpy(),
-                "effective_neighbors": effective_neighbors.detach().cpu().numpy(),
-            },
-            index=target_adata.obs_names,
-        )
-
     def _transfer_categorical(self, values, source):
         _, target_adata = self._get_source_target_adatas(source)
         categorical = pd.Categorical(values)
@@ -435,8 +399,8 @@ class TransportResult:
             raise RuntimeError(
                 "The transport plan is symbolic in KeOps mode. Use "
                 "materialize_plan() to explicitly build a dense tensor, or use "
-                "transfer_obs(), project(), top_matches(), and "
-                "assignment_confidence(), which support symbolic reductions."
+                "transfer_obs(), project(), and top_matches(), which support "
+                "symbolic reductions."
             )
         return plan
 
@@ -481,24 +445,3 @@ class TransportResult:
         values = -(-plan).Kmin(K=k, dim=dim)
         values = values / torch.clamp(denominator, min=torch.finfo(values.dtype).tiny)
         return values, indices
-
-    def _symbolic_confidence(self, source):
-        plan = self.plan
-        if source == self._model.y_mod_:
-            dim = 1
-            denominator = plan.sum(dim=1)
-            denominator_lazy = LazyTensor(denominator.view(-1, 1, 1))
-        elif source == self._model.x_mod_:
-            dim = 0
-            denominator = plan.sum(dim=0)
-            denominator_lazy = LazyTensor(denominator.view(1, -1, 1))
-        else:
-            raise ValueError(f"source must be one of {self._model.modalities_}.")
-        max_weight = (-(-plan).Kmin(K=1, dim=dim)) / torch.clamp(
-            denominator,
-            min=torch.finfo(denominator.dtype).tiny,
-        )
-        weights = plan / denominator_lazy
-        tiny = torch.finfo(self.f.dtype).tiny
-        entropy = -(weights * (weights + tiny).log()).sum(dim=dim)
-        return max_weight.view(-1), entropy.view(-1)

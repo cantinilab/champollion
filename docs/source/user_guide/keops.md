@@ -13,7 +13,7 @@ result.cost_is_symbolic
 result.plan_is_symbolic
 ```
 
-High-level operations such as annotation transfer, barycentric projection, top matches, and assignment confidence are designed to work with symbolic plans when possible.
+High-level operations such as annotation transfer, barycentric projection, and top matches are designed to work with symbolic plans when possible.
 
 Dense materialization is explicit and guarded by a size limit:
 

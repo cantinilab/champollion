@@ -167,11 +167,6 @@ def test_public_dense_fit_transport_and_transfer_workflow():
     assert matches.shape == (4, 4)
     assert list(matches.index) == list(adatas["rna"].obs_names)
 
-    confidence = result.assignment_confidence(source="adt")
-    assert confidence.shape == (4, 3)
-    assert (confidence["max_weight"] >= 0).all()
-    assert (confidence["max_weight"] <= 1).all()
-
 
 def test_schema_validation_and_prior_error_paths():
     model = _fit_model(seed=20, use_keops=False, use_prior=True)

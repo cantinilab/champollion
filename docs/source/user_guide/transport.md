@@ -53,4 +53,4 @@ This is useful for building joint visualizations with representations from both 
 
 ## Matching
 
-Use `top_matches` or `assignment_confidence` to inspect strongest cell-to-cell correspondences. These utilities help diagnose whether integration is sharp, ambiguous, or concentrated around expected biological populations.
+Use `top_matches` to inspect strongest cell-to-cell correspondences and diagnose whether integration concentrates around expected biological populations.
