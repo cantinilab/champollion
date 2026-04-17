@@ -39,4 +39,11 @@ jobs:
           KEOPS_CACHE_FOLDER: /tmp/champollion-keops-cache
           MPLCONFIGDIR: /tmp/matplotlib
           NUMBA_CACHE_DIR: /tmp/numba
-        run: poetry run pytest -p no:cacheprovider tests/test_champollion_api.py
+        run: poetry run pytest -p no:cacheprovider --cov=champollion --cov-report=xml --cov-report=term tests/test_champollion_api.py
+
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage.xml
+          fail_ci_if_error: true

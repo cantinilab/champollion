@@ -28,11 +28,12 @@ myst-parser = { version = "^4.0.0", optional = true }
 nbsphinx = { version = "^0.9.7", optional = true }
 sphinx-autodoc-typehints = { version = "^3.5.0", optional = true }
 ruff = { version = "^0.14.0", optional = true }
+pytest-cov = { version = "^7.0.0", optional = true }
 
 [tool.poetry.extras]
 wandb = ["wandb"]
 docs = ["sphinx", "furo", "myst-parser", "nbsphinx", "sphinx-autodoc-typehints"]
-dev = ["ruff"]
+dev = ["ruff", "pytest-cov"]
 
 [tool.ruff]
 line-length = 88
