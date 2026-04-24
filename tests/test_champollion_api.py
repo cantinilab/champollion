@@ -81,8 +81,6 @@ def _fit_model(seed=0, use_keops=False, use_prior=True):
         learning_rate=1e-2,
         sinkhorn_tol=0.0,
         log_every=1,
-        max_iter_sink=3,
-        transport_log_every=1,
         verbose=False,
     )
     kwargs = {}
@@ -247,8 +245,6 @@ def test_X_and_layer_representations_use_var_names_and_can_be_reused():
         random_state=50,
         max_iter=1,
         log_every=1,
-        max_iter_sink=2,
-        transport_log_every=1,
         sinkhorn_tol=0.0,
         verbose=False,
     ).fit(bridge, modality_1="rna", modality_2="adt")
@@ -281,8 +277,6 @@ def test_X_and_layer_representations_use_var_names_and_can_be_reused():
         random_state=51,
         max_iter=1,
         log_every=1,
-        max_iter_sink=2,
-        transport_log_every=1,
         sinkhorn_tol=0.0,
         verbose=False,
     ).fit(
@@ -322,6 +316,55 @@ def test_X_and_layer_representations_use_var_names_and_can_be_reused():
             {"rna": rna_bad, "adt": adt_test},
             max_iter_sink=1,
             log_every=1,
+        )
+
+
+def test_fit_aligns_reordered_bridge_and_rejects_mismatched_obs_names():
+    bridge = _make_bridge(seed=60)
+    adt_reordered = bridge.mod["adt"][bridge.mod["adt"].obs_names[::-1]].copy()
+
+    model = Champollion(
+        device="cpu",
+        random_state=60,
+        max_iter=1,
+        log_every=1,
+        sinkhorn_tol=0.0,
+        verbose=False,
+    ).fit(
+        SimpleNamespace(mod={"rna": bridge.mod["rna"], "adt": adt_reordered}),
+        modality_1="rna",
+        modality_2="adt",
+        x_1_rep="latent",
+        x_2_rep="latent",
+        y_prior_1_rep="prior",
+        y_prior_2_rep="prior",
+        feature_names=FEATURE_NAMES,
+    )
+
+    train_result = model.training_transport()
+    expected_obs_names = list(bridge.mod["rna"].obs_names)
+    assert list(train_result.modality_1_obs_names) == expected_obs_names
+    assert list(train_result.modality_2_obs_names) == expected_obs_names
+
+    adt_bad = bridge.mod["adt"].copy()
+    adt_bad.obs_names = [f"other_{idx}" for idx in range(adt_bad.n_obs)]
+    with pytest.raises(ValueError, match="same observation names"):
+        Champollion(
+            device="cpu",
+            random_state=61,
+            max_iter=1,
+            log_every=1,
+            sinkhorn_tol=0.0,
+            verbose=False,
+        ).fit(
+            SimpleNamespace(mod={"rna": bridge.mod["rna"], "adt": adt_bad}),
+            modality_1="rna",
+            modality_2="adt",
+            x_1_rep="latent",
+            x_2_rep="latent",
+            y_prior_1_rep="prior",
+            y_prior_2_rep="prior",
+            feature_names=FEATURE_NAMES,
         )
 
 
@@ -391,6 +434,14 @@ def test_save_load_and_A_interpretation_utilities(tmp_path):
     assert torch.allclose(after.cost, before.cost)
     assert torch.allclose(after.plan, before.plan)
 
+    default_transport = loaded.transport(
+        adatas,
+        x_reps={"rna": "latent", "adt": "latent"},
+        feature_names=FEATURE_NAMES,
+    )
+    assert default_transport.plan.shape == (4, 3)
+    assert default_transport.plan_diagnostics["finite"]
+
 
 def test_prior_processing_is_finite_and_warns_for_zero_mean_cost():
     prior = np.array(
@@ -455,3 +506,94 @@ def test_keops_symbolic_transport_and_materialization_guards():
     assert labels.shape == (2,)
     projected = result.project("latent", source="adt")
     assert projected.shape == (2, 2)
+
+
+def test_plotting_utilities_smoke(tmp_path):
+    matplotlib = pytest.importorskip("matplotlib")
+    matplotlib.use("Agg", force=True)
+    plt = pytest.importorskip("matplotlib.pyplot")
+
+    from champollion.plot import (
+        get_plot_top_interactions,
+        plot_aggregated_cost_matrix,
+        plot_aggregated_transport_plan,
+        top_interactions_bar,
+    )
+
+    heat_mtx = np.array(
+        [
+            [1.0, 2.0, 3.0, 4.0],
+            [5.0, 6.0, 7.0, 8.0],
+            [9.0, 10.0, 11.0, 12.0],
+        ],
+        dtype=np.float32,
+    )
+    save_path = tmp_path / "aggregated_transport.png"
+    aggregated, fig, ax = plot_aggregated_transport_plan(
+        heat_mtx=heat_mtx,
+        annotations=["a", "a", "b"],
+        annotations_ordered=["a", "b"],
+        annotations_2=["x", "x", "y", "y"],
+        annotations_ordered_2=["x", "y"],
+        cbar_label="mass",
+        save_path=save_path,
+    )
+
+    assert np.allclose(aggregated, np.array([[7.0, 11.0], [19.0, 23.0]]))
+    assert [tick.get_text() for tick in ax.get_xticklabels()] == ["x", "y"]
+    assert [tick.get_text() for tick in ax.get_yticklabels()] == ["a", "b"]
+    assert fig.axes[1].get_ylabel() == "mass"
+    assert save_path.exists()
+    plt.close(fig)
+
+    aggregated_cost, fig, ax = plot_aggregated_cost_matrix(
+        heat_mtx=heat_mtx,
+        annotations=["a", "a", "b"],
+        annotations_ordered=["a", "b"],
+        annotations_2=["x", "x", "y", "y"],
+        annotations_ordered_2=["x", "y"],
+    )
+    assert np.allclose(aggregated_cost, np.array([[3.5, 5.5], [9.5, 11.5]]))
+    assert fig.axes[1].get_ylabel() == "cost"
+    plt.close(fig)
+
+    with pytest.raises(ValueError, match="reduction must be 'sum' or 'median'"):
+        plot_aggregated_transport_plan(
+            heat_mtx=heat_mtx,
+            annotations=["a", "a", "b"],
+            annotations_ordered=["a", "b"],
+            reduction="mean",
+        )
+
+    model = _fit_model(seed=70, use_keops=False, use_prior=False)
+    model.A_ = torch.tensor(
+        [
+            [3.0, -1.0],
+            [0.0, 2.0],
+            [-4.0, 0.5],
+        ],
+        dtype=torch.float32,
+    )
+    interactions = model.top_interactions("rna_factor_0", modality="rna", k=2)
+    fig, ax = top_interactions_bar(
+        interactions=interactions,
+        title="Top interactions",
+    )
+    assert ax.get_title() == "Top interactions"
+    assert len(ax.patches) == 2
+    assert [tick.get_text() for tick in ax.get_yticklabels()] == [
+        "adt_factor_1",
+        "adt_factor_0",
+    ]
+    plt.close(fig)
+
+    fig, ax = get_plot_top_interactions(
+        model,
+        feature="adt_factor_0",
+        modality="adt",
+        direction="negative",
+        colors="#CA4B55",
+    )
+    assert ax.get_title() == "Top negative interactions with adt_factor_0"
+    assert len(ax.patches) == 1
+    plt.close(fig)

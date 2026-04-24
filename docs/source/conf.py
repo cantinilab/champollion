@@ -12,7 +12,9 @@ DOCS_TUTORIALS = DOCS_SOURCE / "tutorials" / "notebooks"
 if ROOT_TUTORIALS.exists():
     if DOCS_TUTORIALS.is_symlink():
         DOCS_TUTORIALS.unlink()
-    shutil.copytree(ROOT_TUTORIALS, DOCS_TUTORIALS, dirs_exist_ok=True)
+    elif DOCS_TUTORIALS.exists():
+        shutil.rmtree(DOCS_TUTORIALS)
+    shutil.copytree(ROOT_TUTORIALS, DOCS_TUTORIALS)
 
 project = "Champollion"
 author = "Jules Samaran"

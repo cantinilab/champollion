@@ -136,10 +136,7 @@ files = [
 ]
 
 [package.dependencies]
-cffi = [
-    {version = ">=1.0.1", markers = "python_version < \"3.14\""},
-    {version = ">=2.0.0b1", markers = "python_version >= \"3.14\""},
-]
+cffi = {version = ">=1.0.1", markers = "python_version < \"3.14\""}
 
 [[package]]
 name = "array-api-compat"
@@ -2892,10 +2889,7 @@ files = [
 ]
 
 [package.dependencies]
-numpy = [
-    {version = ">=1.26.0", markers = "python_version < \"3.14\""},
-    {version = ">=2.3.3", markers = "python_version >= \"3.14\""},
-]
+numpy = {version = ">=1.26.0", markers = "python_version < \"3.14\""}
 python-dateutil = ">=2.8.2"
 tzdata = {version = "*", markers = "sys_platform == \"win32\" or sys_platform == \"emscripten\""}
 
@@ -5024,5 +5018,5 @@ wandb = ["wandb"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.12.7"
-content-hash = "2e471aefe95431c33905210c0850a434891c2c1c14e67042902b4f3771224f1b"
+python-versions = ">=3.12.7,<3.13"
+content-hash = "dbb8d5d2424991bb9eef451d71cebd7e495376d8a1a8784b99d7f4b382a6479c"

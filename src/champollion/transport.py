@@ -7,7 +7,7 @@ from champollion._data import get_representation
 from champollion._ot import full_cost, transport_plan
 from champollion.prior import compute_prior_cost
 
-DEFAULT_MAX_MATERIALIZE_ENTRIES = 50_000 * 50_000
+DEFAULT_MAX_MATERIALIZE_ENTRIES = 30_000 * 30_000
 
 
 class TransportResult:

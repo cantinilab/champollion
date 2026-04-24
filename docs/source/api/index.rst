@@ -7,3 +7,4 @@ API Reference
    model
    transport
    prior
+   plot

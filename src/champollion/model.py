@@ -58,10 +58,6 @@ class Champollion:
         Tolerance used when checking Sinkhorn marginal convergence.
     log_every
         Number of fit iterations between metric logging and convergence checks.
-    max_iter_sink
-        Maximum number of Sinkhorn iterations used for transport after fitting.
-    transport_log_every
-        Number of transport Sinkhorn iterations between convergence checks.
     monitor_gradient_norm
         If truthy, enable gradient-norm stopping during fitting.
     gradient_norm_tol
@@ -89,8 +85,6 @@ class Champollion:
         learning_rate=1e-3,
         sinkhorn_tol=1e-3,
         log_every=40,
-        max_iter_sink=1000,
-        transport_log_every=10,
         monitor_gradient_norm=None,
         gradient_norm_tol=1e-3,
         wandb_log=False,
@@ -114,8 +108,6 @@ class Champollion:
         self.learning_rate = learning_rate
         self.sinkhorn_tol = sinkhorn_tol
         self.log_every = log_every
-        self.max_iter_sink = max_iter_sink
-        self.transport_log_every = transport_log_every
         self.monitor_gradient_norm = monitor_gradient_norm
         self.gradient_norm_tol = gradient_norm_tol
         self.wandb_log = wandb_log
@@ -288,8 +280,8 @@ class Champollion:
         y_prior_reps=None,
         store_cost=True,
         store_plan=False,
-        max_iter_sink=None,
-        log_every=None,
+        max_iter_sink=1000,
+        log_every=10,
         feature_names=None,
     ):
         """Compute transport between unpaired modality-specific AnnData objects.
@@ -317,9 +309,10 @@ class Champollion:
             Whether to compute and store the transport plan immediately. If
             ``False``, the plan is computed lazily on first access.
         max_iter_sink
-            Override the model's transport Sinkhorn iteration limit.
+            Maximum number of Sinkhorn iterations used to solve the transport
+            problem.
         log_every
-            Override the model's transport Sinkhorn check frequency.
+            Number of transport Sinkhorn iterations between convergence checks.
         feature_names
             Optional feature-name overrides for transport representations.
 
@@ -366,10 +359,8 @@ class Champollion:
         )
         f, g = self._solve_transport_potentials(
             cost=cost,
-            max_iter_sink=self.max_iter_sink
-            if max_iter_sink is None
-            else max_iter_sink,
-            log_every=self.transport_log_every if log_every is None else log_every,
+            max_iter_sink=max_iter_sink,
+            log_every=log_every,
         )
         diagnostics = self._plan_diagnostics(cost=cost, f=f, g=g)
         result = TransportResult(
@@ -430,8 +421,6 @@ class Champollion:
                 "learning_rate": self.learning_rate,
                 "sinkhorn_tol": self.sinkhorn_tol,
                 "log_every": self.log_every,
-                "max_iter_sink": self.max_iter_sink,
-                "transport_log_every": self.transport_log_every,
                 "monitor_gradient_norm": self.monitor_gradient_norm,
                 "gradient_norm_tol": self.gradient_norm_tol,
                 "wandb_log": self.wandb_log,
