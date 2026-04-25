@@ -1,5 +1,6 @@
 # Champollion
 
+[![PyPI version](https://img.shields.io/pypi/v/champollion-omics)](https://pypi.org/project/champollion-omics/)
 [![Tests](https://github.com/cantinilab/champollion/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/cantinilab/champollion/actions/workflows/tests.yml)
 [![Lint](https://github.com/cantinilab/champollion/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/cantinilab/champollion/actions/workflows/lint.yml)
 [![Docs](https://github.com/cantinilab/champollion/actions/workflows/docs.yml/badge.svg?branch=main)](https://github.com/cantinilab/champollion/actions/workflows/docs.yml)
@@ -12,19 +13,25 @@ Champollion learns an interpretable cross-modality cost from paired bridge cells
 
 ## Install
 
-The package is currently being prepared for its first public release. During development, install it from a local checkout:
+Install the latest stable release from PyPI (recommended):
 
 ```bash
-git clone git@github.com:cantinilab/champollion.git
-cd champollion
-pip install .
+pip install champollion-omics
 ```
 
 Optional Weights & Biases logging can be installed with:
 
 ```bash
-pip install "champollion[wandb]"
+pip install "champollion-omics[wandb]"
 ```
+
+To install the latest development version from GitHub instead:
+
+```bash
+pip install "git+https://github.com/cantinilab/champollion.git"
+```
+
+Champollion is designed to take advantage of a GPU and runs much faster with one, typically taking only a few minutes on datasets with thousands of cells.
 
 ## Documentation
 
