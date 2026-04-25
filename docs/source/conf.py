@@ -40,6 +40,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "furo"
 html_static_path = ["_static"]
 html_title = "Champollion"
+html_css_files = ["champollion-docs.css"]
+html_js_files = ["champollion-docs.js"]
 
 autosummary_generate = True
 autodoc_member_order = "bysource"

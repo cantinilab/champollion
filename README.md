@@ -28,13 +28,13 @@ pip install "champollion[wandb]"
 
 ## Documentation
 
-Documentation and tutorials are available at [champollion-omics.readthedocs.io](https://champollion-omics.readthedocs.io/en/latest/).
+Documentation is available at [champollion-omics.readthedocs.io](https://champollion-omics.readthedocs.io/en/latest/).
 
-The PBMC tutorial included in `tutorials/pbmc_tutorial.ipynb` demonstrates fitting Champollion on bridge cells, transporting unpaired cells, transferring annotations, and building a joint visualization.
+Two tutorials are available there to demonstrate classic use cases of the package: fitting Champollion on bridge cells, transporting unpaired cells, transferring annotations, building a joint visualization, interpreting the learnt `A` matrix.
 
 ## Getting Started
 
-For a concrete application, see the PBMC tutorial; the example below is only a compact overview of the API. Champollion is fitted on a paired bridge stored in a `MuData` object. It can then be applied to modality-specific `AnnData` objects containing unpaired cells.
+For a concrete application, see the tutorials; the example below is only a compact overview of the API. Champollion is fitted on a paired bridge stored in a `MuData` object. It can then be applied to modality-specific `AnnData` objects containing unpaired cells.
 
 ```python
 from champollion import Champollion

@@ -4,6 +4,7 @@
 :maxdepth: 1
 
 notebooks/pbmc_tutorial
+notebooks/cite_interpretability_tutorial
 ```
 
-The PBMC tutorial demonstrates fitting Champollion on paired bridge cells and applying the learned cost to cells treated as unpaired. The notebooks live in the repository `tutorials/` folder so they can be opened and run directly.
+The RNA-ATAC tutorial uses PCA representations as input and focuses on the quality of integration for unpaired cells. The RNA-ADT tutorial uses normalized gene and protein expression features and focuses on interpreting the learned `A` matrix.
