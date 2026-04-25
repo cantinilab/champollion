@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from matplotlib.colors import LogNorm
 
 __all__ = [
     "plot_aggregated_transport_plan",
     "plot_aggregated_cost_matrix",
+    "plot_ordered_transport_plan",
     "top_interactions_bar",
     "get_plot_top_interactions",
 ]
@@ -78,8 +80,8 @@ def _plot_aggregated_matrix(
     save_path
         Optional path where the figure should be saved.
     reduction
-        Aggregation used within each cell-type pair. ``"sum"`` computes the
-        total block mass divided by the smaller cell-type block size.
+        Aggregation used within each annotation pair. ``"sum"`` computes the
+        total block mass divided by the smaller annotation block size.
         ``"median"`` uses the median value in each block.
     figsize
         Matplotlib figure size.
@@ -265,6 +267,146 @@ def plot_aggregated_cost_matrix(
         x_rotation=x_rotation,
         x_ha=x_ha,
     )
+
+
+def plot_ordered_transport_plan(
+    heat_mtx,
+    annotations,
+    annotations_ordered,
+    annotations_2=None,
+    annotations_ordered_2=None,
+    cmap="magma",
+    figsize=(7, 7),
+    tick_fontsize=10,
+    linecolor="white",
+    linewidth=1.0,
+    title=None,
+    vmin=1e-8,
+    vmax=None,
+    xlabel="ATAC cells",
+    ylabel="RNA cells",
+):
+    """Plot a transport plan after reordering cells by annotations.
+
+    Cells are reordered so that the same annotation values appear in contiguous
+    blocks on each axis, which can help visualize whether transported mass
+    concentrates between biologically matching annotated populations.
+
+    Parameters
+    ----------
+    heat_mtx
+        Cell-level transport matrix with cells from modality 1 on rows and cells
+        from modality 2 on columns.
+    annotations
+        Annotation labels for the rows of ``heat_mtx``. For example, cell
+        annotations such as cell types.
+    annotations_ordered
+        Annotation values used to reorder the rows and display tick labels.
+    annotations_2
+        Annotation labels for the columns of ``heat_mtx``. If ``None``, the row
+        annotations are reused.
+    annotations_ordered_2
+        Annotation values used to reorder the columns and display tick labels.
+        If ``None``, the row annotation order is reused.
+    cmap
+        Matplotlib colormap used to display the reordered matrix.
+    figsize
+        Matplotlib figure size.
+    tick_fontsize
+        Font size used for annotation tick labels.
+    linecolor
+        Color used for boundaries between annotation blocks.
+    linewidth
+        Line width used for boundaries between annotation blocks.
+    title
+        Plot title. If ``None``, a default title is used.
+    vmin
+        Positive lower bound used for logarithmic color scaling.
+    vmax
+        Optional upper bound used for logarithmic color scaling. If ``None``,
+        the maximum finite matrix entry is used.
+    xlabel
+        Label for the x-axis.
+    ylabel
+        Label for the y-axis.
+
+    Returns
+    -------
+    ordered_mtx
+        Dense transport matrix after annotation-based row and column reordering.
+    row_order
+        Integer indices used to reorder the rows of ``heat_mtx``.
+    col_order
+        Integer indices used to reorder the columns of ``heat_mtx``.
+    fig
+        Matplotlib figure.
+    ax
+        Matplotlib axes.
+    """
+    heat_mtx = np.asarray(heat_mtx)
+    annotations = np.asarray(annotations)
+    if annotations_2 is None:
+        annotations_2 = annotations
+        annotations_ordered_2 = annotations_ordered
+    else:
+        annotations_2 = np.asarray(annotations_2)
+        if annotations_ordered_2 is None:
+            raise ValueError(
+                "If annotations_2 is provided, annotations_ordered_2 must also "
+                "be provided."
+            )
+    if heat_mtx.shape[0] != len(annotations):
+        raise ValueError("heat_mtx.shape[0] must match len(annotations).")
+    if heat_mtx.shape[1] != len(annotations_2):
+        raise ValueError("heat_mtx.shape[1] must match len(annotations_2).")
+
+    row_groups = [np.where(annotations == value)[0] for value in annotations_ordered]
+    col_groups = [
+        np.where(annotations_2 == value)[0] for value in annotations_ordered_2
+    ]
+    row_order = np.concatenate(row_groups) if row_groups else np.array([], dtype=int)
+    col_order = np.concatenate(col_groups) if col_groups else np.array([], dtype=int)
+    ordered_mtx = heat_mtx[np.ix_(row_order, col_order)].astype(float, copy=True)
+
+    plot_mtx = ordered_mtx.copy()
+    plot_mtx[plot_mtx <= 0] = vmin
+    finite_max = np.nanmax(plot_mtx)
+    fig, ax = plt.subplots(figsize=figsize)
+    im = ax.imshow(
+        plot_mtx,
+        cmap=cmap,
+        norm=LogNorm(vmin=vmin, vmax=vmax or finite_max),
+    )
+
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    if title is None:
+        title = "Transport plan ordered by annotation"
+    ax.set_title(title)
+
+    for boundary in np.cumsum([len(group) for group in row_groups])[:-1]:
+        ax.axhline(boundary - 0.5, color=linecolor, linewidth=linewidth)
+    for boundary in np.cumsum([len(group) for group in col_groups])[:-1]:
+        ax.axvline(boundary - 0.5, color=linecolor, linewidth=linewidth)
+
+    row_sizes = [len(group) for group in row_groups]
+    col_sizes = [len(group) for group in col_groups]
+    row_starts = np.cumsum([0] + row_sizes[:-1])
+    col_starts = np.cumsum([0] + col_sizes[:-1])
+    ax.set_yticks(row_starts + np.asarray(row_sizes) / 2 - 0.5)
+    ax.set_yticklabels(annotations_ordered, fontsize=tick_fontsize)
+    ax.set_xticks(col_starts + np.asarray(col_sizes) / 2 - 0.5)
+    ax.set_xticklabels(
+        annotations_ordered_2,
+        rotation=45,
+        ha="right",
+        fontsize=tick_fontsize,
+    )
+
+    cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    cbar.set_label("Transport mass")
+    plt.tight_layout()
+    return ordered_mtx, row_order, col_order, fig, ax
 
 
 def top_interactions_bar(interactions, title=None, colors=None):

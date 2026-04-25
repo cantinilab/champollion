@@ -517,6 +517,7 @@ def test_plotting_utilities_smoke(tmp_path):
         get_plot_top_interactions,
         plot_aggregated_cost_matrix,
         plot_aggregated_transport_plan,
+        plot_ordered_transport_plan,
         top_interactions_bar,
     )
 
@@ -563,6 +564,39 @@ def test_plotting_utilities_smoke(tmp_path):
             annotations=["a", "a", "b"],
             annotations_ordered=["a", "b"],
             reduction="mean",
+        )
+
+    ordered_mtx, row_order, col_order, fig, ax = plot_ordered_transport_plan(
+        heat_mtx=heat_mtx,
+        annotations=["b", "a", "a"],
+        annotations_ordered=["a", "b"],
+        annotations_2=["y", "x", "x", "y"],
+        annotations_ordered_2=["x", "y"],
+        vmin=1e-4,
+    )
+    assert np.allclose(
+        ordered_mtx,
+        np.array(
+            [
+                [6.0, 7.0, 5.0, 8.0],
+                [10.0, 11.0, 9.0, 12.0],
+                [2.0, 3.0, 1.0, 4.0],
+            ]
+        ),
+    )
+    assert row_order.tolist() == [1, 2, 0]
+    assert col_order.tolist() == [1, 2, 0, 3]
+    assert [tick.get_text() for tick in ax.get_xticklabels()] == ["x", "y"]
+    assert [tick.get_text() for tick in ax.get_yticklabels()] == ["a", "b"]
+    assert fig.axes[1].get_ylabel() == "Transport mass"
+    plt.close(fig)
+
+    with pytest.raises(ValueError, match="annotations_ordered_2"):
+        plot_ordered_transport_plan(
+            heat_mtx=heat_mtx,
+            annotations=["a", "a", "b"],
+            annotations_ordered=["a", "b"],
+            annotations_2=["x", "x", "y", "y"],
         )
 
     model = _fit_model(seed=70, use_keops=False, use_prior=False)
